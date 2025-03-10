@@ -1,0 +1,24 @@
+# Ignore all files inside build/
+build/*
+
+# But keep the directory itself
+!build/.gitkeep
+
+# Ignore compiled binaries
+*.o
+*.out
+*.exe
+*.bin
+*.dll
+
+# Ignore backup and temporary files
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+*.code-workspace
