@@ -1,9 +1,6 @@
 # Ignore all files inside build/
 build/*
 
-# But keep the directory itself
-!build/.gitkeep
-
 # Ignore compiled binaries
 *.o
 *.out
