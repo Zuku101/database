@@ -1,8 +1,7 @@
 #include <iostream>
 #include "cli.h"
 #include "ohm_api.h"
-
-#define OHM_URL "http://172.21.160.1:8080/data.json"
+#include "config.h"
 
 // @todo: Exit the program if the data fetch fails
 

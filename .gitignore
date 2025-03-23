@@ -1,21 +1,19 @@
-# Ignore all files inside build/
 build/*
+data/*
+conf/components.conf
 
-# Ignore compiled binaries
 *.o
 *.out
 *.exe
 *.bin
 *.dll
 
-# Ignore backup and temporary files
 *.swp
 *.swo
 *.bak
 *.tmp
 *.log
 
-# Ignore editor-specific files
 .vscode/
 .idea/
 *.code-workspace

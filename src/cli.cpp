@@ -3,13 +3,27 @@
 #include <map>
 #include <limits>
 #include "cli.h"
+#include "config_handler.h"
+#include "storage.h"
+#include "measurement.h"
+#include "ohm_api.h"
+#include <iostream>
+#include <chrono>
+#include <nlohmann/json.hpp>
+#include "config.h"
 
 using namespace std;
+using json = nlohmann::json;
 
 /**
  * @brief Function prototype for handling component monitoring.
  */
 void handleMonitoring(const string& component);
+
+/**
+ * @brief Function prototype for adding a single record for a component.
+ */
+void addSingleRecord(const std::string &componentName);
 
 /**
  * @brief Enumeration representing available components.
@@ -61,15 +75,15 @@ void clearInputBuffer() {
 /**
  * @brief Template function handling record operations.
  * 
- * @param operationName 
- *   Operation name.
+ * @param operationName
+ *   Name of the operation being performed
  * @param component
- *   Component name.
- * @param action 
- *   Function executing the actual operation.
+ *   Name of the hardware component being operated on
+ * @param action
+ *   Callback function to execute the operation
  * 
- * @tparam 
- *   ActionFunc Callback function type for operation execution
+ * @tparam ActionFunc
+ *   Type of the callback function for operation execution
  */
 template<typename ActionFunc>
 void handleRecords(const string& operationName, const string& component, ActionFunc action) {
@@ -120,11 +134,11 @@ void handleRecords(const string& operationName, const string& component, ActionF
  * @brief Displays and handles menu for selected operation.
  * 
  * @param opType 
- *   Operation type.
- * @param title 
- *   Title displayed in menu.
- * @param handler 
- *   Function handling the selected operation.
+ *   Operation type (ADD/MONITOR/LIST/EXPORT/DELETE)
+ * @param title
+ *   Title displayed in menu header
+ * @param handler
+ *   Function to execute when operation is selected
  */
 void showOperationMenu(OperationType opType, const string& title, 
                       function<void(const string&, int, bool)> handler) {
@@ -155,7 +169,7 @@ void showOperationMenu(OperationType opType, const string& title,
 
         switch (opType) {
             case OperationType::ADD:
-                cout << "Added: " << componentName << " (to be implemented)\n";
+                addSingleRecord(componentName);
                 continue;
             
             case OperationType::MONITOR:
@@ -219,6 +233,15 @@ void handleMonitoring(const string& component) {
  *          Contains options: Add, Monitor, List, Export, Delete and Exit
  */
 void runCLI() {
+    try {
+        ConfigHandler::getInstance().loadConfig("../conf/components.conf");
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Configuration error: " << e.what() << std::endl;
+        std::cerr << "Please fill in the components.conf file with appropriate component identifiers." << std::endl;
+        return;
+    }
+
     map<int, MenuItem> mainMenu = {
         {1, {"Add", []() { 
             showOperationMenu(OperationType::ADD, "Add Component", nullptr);
@@ -282,4 +305,114 @@ void runCLI() {
             cout << "Error: " << e.what() << "\n";
         }
     }
+}
+
+/**
+ * @brief Fetches temperature data for a specific sensor.
+ * 
+ * @param device
+ *   JSON object containing device sensor data
+ * @param sensorName
+ *   Name of the temperature sensor to find
+ *
+ * @return string
+ *   Temperature value in Celsius, -1.0 if not found
+ */
+double findTemperature(const json &device, const std::string &sensorName) {
+    for (const auto &sensorCategory : device["Children"]) {
+        if (sensorCategory.contains("Text") && sensorCategory["Text"] == "Temperatures") {
+            for (const auto &sensor : sensorCategory["Children"]) {
+                if (sensor.contains("Text") && sensor["Text"] == sensorName && sensor.contains("Value")) {
+                    std::string valueStr = sensor["Value"].get<std::string>();
+                    valueStr.erase(valueStr.find(" °C"), 3);
+                    return std::stod(valueStr);
+                }
+            }
+        }
+    }
+    return -1.0;
+}
+
+/**
+ * @brief Fetches OHM data and extracts temperature for a component.
+ * 
+ * @param componentName
+ *   Name of the component to get temperature for
+ * @param ohmData
+ *   JSON object containing OHM sensor data
+ *
+ * @return string
+ *   Temperature value in Celsius, -1.0 if not found
+ */
+double extractTemperature(const std::string &componentName, const json &ohmData) {
+    if (!ohmData.contains("Children") || !ohmData["Children"].is_array()) {
+        std::cerr << "❌ No data or invalid data format from OHM!\n";
+        return -1.0;
+    }
+
+    for (const auto &systemNode : ohmData["Children"]) {
+        if (!systemNode.contains("Children")) continue;
+
+        for (const auto &motherboardNode : systemNode["Children"]) {
+            if (!motherboardNode.contains("Text") || !motherboardNode.contains("Children")) continue;
+
+            std::string deviceName = motherboardNode["Text"].get<std::string>();
+
+            if (componentName == "Motherboard" && 
+                deviceName.find("MSI MPG Z390") != std::string::npos) {
+                
+                for (const auto &chipNode : motherboardNode["Children"]) {
+                    if (chipNode["Text"].get<std::string>().find("Nuvoton") != std::string::npos) {
+                        return findTemperature(chipNode, "CPU Core");
+                    }
+                }
+            }
+            else if (componentName == "CPU" && deviceName.find("Intel") != std::string::npos) {
+                return findTemperature(motherboardNode, "CPU Package");
+            }
+            else if (componentName == "GPU" && deviceName.find("NVIDIA") != std::string::npos) {
+                return findTemperature(motherboardNode, "GPU Core");
+            }
+        }
+    }
+
+    std::cerr << "⚠️ Component '" << componentName << "' not found in OHM data!\n";
+    return -1.0;
+}
+
+/**
+ * @brief Fetches OHM data and saves a single record for a specific component.
+ * 
+ * @param componentName
+ *   Name of the hardware component to record.
+ */
+void addSingleRecord(const std::string &componentName) {
+    std::string ohmJsonString = fetchOHMData(OHM_URL);
+
+    if (ohmJsonString.empty()) {
+        std::cerr << "❌ Failed to fetch OHM data.\n";
+        return;
+    }
+
+    json ohmData;
+    try {
+        ohmData = json::parse(ohmJsonString);
+    } 
+    catch (...) {
+        std::cerr << "❌ Error parsing JSON data from OHM!\n";
+        return;
+    }
+
+    double temp = extractTemperature(componentName, ohmData);
+    if (temp == -1.0) return;
+
+    auto now = std::chrono::system_clock::now();
+    long long epochSeconds = std::chrono::duration_cast<std::chrono::seconds>(
+        now.time_since_epoch()
+    ).count();
+
+    Measurement measurement{componentName, temp, epochSeconds};
+
+    static StorageManager storage;
+    storage.saveRecord(measurement);
 }

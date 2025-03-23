@@ -1,0 +1,16 @@
+# To properly configure the environment and components from which we will read temperatures:
+#
+# 1. Open Open Hardware Monitor
+# 2. Find:
+#    - For CPU: processor name (e.g., "Intel")
+#    - For GPU: graphics card name (e.g., "NVIDIA")
+#    - For MOTHERBOARD: motherboard model (e.g., "MSI MPG Z390")
+#    - For CHIP: chip name inside the motherboard (e.g., "Nuvoton")
+#
+# If you have trouble with this, please check readme.md in the repository
+
+
+CPU=Intel
+GPU=NVIDIA
+MOTHERBOARD=MSI MPG Z390
+CHIP=Nuvoton
