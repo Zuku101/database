@@ -388,7 +388,6 @@ double extractTemperature(const std::string &componentName, const json &ohmData)
  */
 void addSingleRecord(const std::string &componentName) {
     std::string ohmJsonString = fetchOHMData(OHM_URL);
-
     if (ohmJsonString.empty()) {
         std::cerr << "❌ Failed to fetch OHM data.\n";
         return;
@@ -403,16 +402,26 @@ void addSingleRecord(const std::string &componentName) {
         return;
     }
 
-    double temp = extractTemperature(componentName, ohmData);
-    if (temp == -1.0) return;
-
     auto now = std::chrono::system_clock::now();
     long long epochSeconds = std::chrono::duration_cast<std::chrono::seconds>(
         now.time_since_epoch()
     ).count();
 
-    Measurement measurement{componentName, temp, epochSeconds};
-
     static StorageManager storage;
-    storage.saveRecord(measurement);
+
+    if (componentName == "All components") {
+        std::vector<std::string> components = {"GPU", "CPU", "Motherboard"};
+        for (const auto& comp : components) {
+            double temp = extractTemperature(comp, ohmData);
+            if (temp != -1.0) {
+                storage.saveRecord(Measurement{comp, temp, epochSeconds});
+            }
+        }
+    } 
+    else {
+        double temp = extractTemperature(componentName, ohmData);
+        if (temp != -1.0) {
+            storage.saveRecord(Measurement{componentName, temp, epochSeconds});
+        }
+    }
 }
