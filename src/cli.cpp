@@ -213,7 +213,6 @@ void handleMonitoring(const string& component) {
         cout << "\nEnter monitoring duration in seconds (0 for continuous monitoring, 'exit' or 'e' to return): ";
         if (!(cin >> input)) {
             clearInputBuffer();
-            cout << "Invalid input. Please enter a valid number or 'exit' or 'e'.\n";
             continue;
         }
 
@@ -223,9 +222,27 @@ void handleMonitoring(const string& component) {
         }
 
         try {
+            if (input.find_first_not_of("0123456789") != string::npos) {
+                cout << "Invalid input. Please enter a whole number.\n";
+                continue;
+            }
+
             int duration = stoi(input);
-            if (duration < 0) {
-                cout << "Invalid input. Please enter a non-negative number.\n";
+            
+            cout << "Enter measurement interval in seconds (1 or more): ";
+            if (!(cin >> input)) {
+                clearInputBuffer();
+                continue;
+            }
+
+            if (input.find_first_not_of("0123456789") != string::npos) {
+                cout << "Invalid interval. Please enter a whole number.\n";
+                continue;
+            }
+
+            int interval = stoi(input);
+            if (interval < 1) {
+                cout << "Invalid interval. Please enter a number greater than 0.\n";
                 continue;
             }
 
@@ -233,10 +250,10 @@ void handleMonitoring(const string& component) {
             bool monitoring = true;
             int elapsedSeconds = 0;
             
-            cout << "📊 Starting monitoring for " << component << "...\n";
+            cout << "📊 Starting monitoring for " << component 
+                 << " every " << interval << " seconds...\n";
 
             while (monitoring) {
-                // Fetch and save measurement
                 std::string ohmJsonString = fetchOHMData(OHM_URL);
                 if (!ohmJsonString.empty()) {
                     try {
@@ -245,7 +262,6 @@ void handleMonitoring(const string& component) {
                         
                         double temp = -1.0;
                         if (component == "All components") {
-                            // Handle all components
                             double gpuTemp = sensorData.getGPUTemperature();
                             double cpuTemp = sensorData.getCPUTemperature();
                             double moboTemp = sensorData.getMotherboardTemperature();
@@ -257,8 +273,8 @@ void handleMonitoring(const string& component) {
                                 storage.saveRecord(Measurement{"CPU", cpuTemp, timestamp});
                             if (moboTemp != -1.0)
                                 storage.saveRecord(Measurement{"Motherboard", moboTemp, timestamp});
-                        } else {
-                            // Handle single component
+                        } 
+                        else {
                             if (component == "GPU")
                                 temp = sensorData.getGPUTemperature();
                             else if (component == "CPU")
@@ -277,20 +293,17 @@ void handleMonitoring(const string& component) {
                     }
                 }
 
-                // Check if we should continue monitoring
                 if (duration > 0) {
-                    elapsedSeconds++;
+                    elapsedSeconds += interval;
                     if (elapsedSeconds >= duration) {
                         monitoring = false;
                     }
                 }
 
-                // Wait for 1 second before next measurement
                 if (monitoring) {
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    std::this_thread::sleep_for(std::chrono::seconds(interval));
                 }
 
-                // For continuous monitoring (duration = 0), check for key press
                 if (duration == 0 && kbhit()) {
                     monitoring = false;
                 }
