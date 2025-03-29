@@ -1,28 +1,68 @@
 #include "ohm_data.h"
 
+/**
+ * @brief Constructs OHMData object with provided JSON data and current timestamp.
+ *
+ * @param data
+ *   JSON data from OpenHardwareMonitor containing sensor readings
+ */
 OHMData::OHMData(const nlohmann::json& data) 
     : rawData(data), timestamp(std::chrono::system_clock::now()) {}
 
+/**
+ * @brief Gets GPU temperature from sensor data.
+ *
+ * @return double
+ *   GPU temperature in Celsius, -1.0 if not found
+ */
 double OHMData::getGPUTemperature() const {
-    return findComponentTemperature("NVIDIA", "GPU Core");
+    return findComponent("NVIDIA", "GPU Core");
 }
 
+/**
+ * @brief Gets CPU temperature from sensor data.
+ *
+ * @return double
+ *   CPU temperature in Celsius, -1.0 if not found
+ */
 double OHMData::getCPUTemperature() const {
-    return findComponentTemperature("Intel", "CPU Package");
+    return findComponent("Intel", "CPU Package");
 }
 
+/**
+ * @brief Gets motherboard temperature from sensor data.
+ *
+ * @return double
+ *   Motherboard temperature in Celsius, -1.0 if not found
+ */
 double OHMData::getMotherboardTemperature() const {
     return findMotherboardTemperature();
 }
 
+/**
+ * @brief Gets current timestamp in Unix format.
+ *
+ * @return long long
+ *   Unix timestamp in seconds
+ */
 long long OHMData::getTimestamp() const {
     return std::chrono::duration_cast<std::chrono::seconds>(
         timestamp.time_since_epoch()
     ).count();
 }
 
-double OHMData::findComponentTemperature(const std::string& deviceIdentifier,
-                                       const std::string& sensorName) const {
+/**
+ * @brief Finds temperature for specific device in JSON data.
+ *
+ * @param deviceIdentifier
+ *   String to identify device (e.g., "NVIDIA", "Intel")
+ * @param sensorName
+ *   Name of the temperature sensor to read
+ *
+ * @return double
+ *   Temperature in Celsius, -1.0 if not found
+ */
+double OHMData::findComponent(const std::string& deviceIdentifier, const std::string& sensorName) const {
     if (!rawData.contains("Children") || !rawData["Children"].is_array()) {
         return -1.0;
     }
@@ -40,9 +80,16 @@ double OHMData::findComponentTemperature(const std::string& deviceIdentifier,
             }
         }
     }
+
     return -1.0;
 }
 
+/**
+ * @brief Finds motherboard temperature in JSON data.
+ *
+ * @return double
+ *   Motherboard temperature in Celsius, -1.0 if not found
+ */
 double OHMData::findMotherboardTemperature() const {
     if (!rawData.contains("Children") || !rawData["Children"].is_array()) {
         return -1.0;
@@ -65,11 +112,22 @@ double OHMData::findMotherboardTemperature() const {
             }
         }
     }
+    
     return -1.0;
 }
 
-double OHMData::findTemperature(const nlohmann::json& device,
-                               const std::string& sensorName) const {
+/**
+ * @brief Extracts temperature value from device's sensor data.
+ *
+ * @param device
+ *   JSON object containing device sensor data
+ * @param sensorName
+ *   Name of the temperature sensor to read
+ *
+ * @return double
+ *   Temperature in Celsius, -1.0 if not found
+ */
+double OHMData::findTemperature(const nlohmann::json& device, const std::string& sensorName) const {
     for (const auto& sensorCategory : device["Children"]) {
         if (sensorCategory.contains("Text") && 
             sensorCategory["Text"] == "Temperatures") {
@@ -84,5 +142,6 @@ double OHMData::findTemperature(const nlohmann::json& device,
             }
         }
     }
+
     return -1.0;
 }

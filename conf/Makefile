@@ -13,7 +13,9 @@ SRCS = $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/api/ohm_api.cpp \
        $(SRC_DIR)/storage/storage.cpp \
 	   $(SRC_DIR)/config/config_handler.cpp \
-	   $(SRC_DIR)/ohm_data.cpp
+	   $(SRC_DIR)/ohm_data.cpp \
+	   $(SRC_DIR)/storage/index_manager.cpp \
+	   $(SRC_DIR)/utils/utils.cpp 
 
 OBJS = $(SRCS:.cpp=.o)
 

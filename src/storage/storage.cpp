@@ -1,4 +1,6 @@
 #include "storage.h"
+#include "index_manager.h"
+#include "utils.h"
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -8,37 +10,6 @@
 #include <libgen.h>    // dirname()
 
 using json = nlohmann::json;
-
-/**
- * @brief Fetches the path to the `data/` directory.
- * 
- * @return std::string 
- *   Path to the data directory
- */
-std::string getDataDirectory() {
-    char path[PATH_MAX];
-    ssize_t count = readlink("/proc/self/exe", path, PATH_MAX);
-    if (count != -1) {
-        std::string confDir = dirname(path);
-        return std::string(dirname(confDir.data())) + "/data";
-    }
-    return "data";
-}
-
-/**
- * @brief Creates the `data/` directory if it doesn't exist.
- * 
- * @param dataPath 
- *   Path where the data directory should be created
- */
-void ensureDataDirectoryExists(const std::string &dataPath) {
-    if (access(dataPath.c_str(), F_OK) == -1) {
-        std::cout << "📁 Creating directory '" << dataPath << "'...\n";
-        if (mkdir(dataPath.c_str(), 0777) == -1) {
-            std::cerr << "❌ Error: Cannot create directory '" << dataPath << "'.\n";
-        }
-    }
-}
 
 /**
  * @brief Saves a record to both `all_measurements.json` and component-specific JSON file.
@@ -71,6 +42,7 @@ void StorageManager::saveRecord(const Measurement &record) {
         std::ofstream file(filePath);
         if (!file) {
             std::cerr << "❌ Error: Cannot open JSON file '" << filePath << "' for writing!\n";
+            
             return;
         }
         file << data.dump(4) << std::endl;
@@ -83,8 +55,9 @@ void StorageManager::saveRecord(const Measurement &record) {
     newRecord["Timestamp"] = record.timestamp;
 
     saveToJson(allJsonFilePath, newRecord);
-
     saveToJson(componentJsonFilePath, newRecord);
+
+    IndexManager::getInstance().addIndex(record.component, record.timestamp);
 
     std::cout << "✅ Record saved to:\n"
               << " - " << allJsonFilePath << "\n"
