@@ -17,32 +17,13 @@
 #include "config.h"
 #include "config_handler.h"
 #include "measurement.h"
+#include "measurement_handler.h"
 #include "ohm_api.h"
 #include "ohm_data.h"
 #include "storage.h"
 
-namespace {
-    bool kbhit() {
-        struct timeval tv = {0L, 0L};
-        fd_set fds;
-        FD_ZERO(&fds);
-        FD_SET(0, &fds);
-        return select(1, &fds, NULL, NULL, &tv) > 0;
-    }
-}
-
 using namespace std;
 using json = nlohmann::json;
-
-/**
- * @brief Function prototype for handling component monitoring.
- */
-void handleMonitoring(const string& component);
-
-/**
- * @brief Function prototype for adding a single record for a component.
- */
-void addSingleRecord(const std::string &componentName);
 
 /**
  * @brief Enumeration representing available components.
@@ -188,132 +169,15 @@ void showOperationMenu(OperationType opType, const string& title,
 
         switch (opType) {
             case OperationType::ADD:
-                addSingleRecord(componentName);
+                MeasurementHandler::getInstance().addSingleRecord(componentName);
                 continue;
             
             case OperationType::MONITOR:
-                handleMonitoring(componentName);
+                MeasurementHandler::getInstance().handleMonitoring(componentName);
                 continue;
             
             default:
                 handleRecords(title, componentName, handler);
-        }
-    }
-}
-
-/**
- * @brief Handles component monitoring with duration.
- * 
- * @param component 
- *   Component name.
- */
-void handleMonitoring(const string& component) {
-    string input;
-    while (true) {
-        cout << "\nEnter monitoring duration in seconds (0 for continuous monitoring, 'exit' or 'e' to return): ";
-        if (!(cin >> input)) {
-            clearInputBuffer();
-            continue;
-        }
-
-        if (input == "exit" || input == "e") {
-            cout << "Returning to Monitor Menu...\n";
-            return;
-        }
-
-        try {
-            if (input.find_first_not_of("0123456789") != string::npos) {
-                cout << "Invalid input. Please enter a whole number.\n";
-                continue;
-            }
-
-            int duration = stoi(input);
-            
-            cout << "Enter measurement interval in seconds (1 or more): ";
-            if (!(cin >> input)) {
-                clearInputBuffer();
-                continue;
-            }
-
-            if (input.find_first_not_of("0123456789") != string::npos) {
-                cout << "Invalid interval. Please enter a whole number.\n";
-                continue;
-            }
-
-            int interval = stoi(input);
-            if (interval < 1) {
-                cout << "Invalid interval. Please enter a number greater than 0.\n";
-                continue;
-            }
-
-            static StorageManager storage;
-            bool monitoring = true;
-            int elapsedSeconds = 0;
-            
-            cout << "📊 Starting monitoring for " << component 
-                 << " every " << interval << " seconds...\n";
-
-            while (monitoring) {
-                std::string ohmJsonString = fetchOHMData(OHM_URL);
-                if (!ohmJsonString.empty()) {
-                    try {
-                        json ohmData = json::parse(ohmJsonString);
-                        OHMData sensorData(ohmData);
-                        
-                        double temp = -1.0;
-                        if (component == "All components") {
-                            double gpuTemp = sensorData.getGPUTemperature();
-                            double cpuTemp = sensorData.getCPUTemperature();
-                            double moboTemp = sensorData.getMotherboardTemperature();
-                            long long timestamp = sensorData.getTimestamp();
-
-                            if (gpuTemp != -1.0) 
-                                storage.saveRecord(Measurement{"GPU", gpuTemp, timestamp});
-                            if (cpuTemp != -1.0)
-                                storage.saveRecord(Measurement{"CPU", cpuTemp, timestamp});
-                            if (moboTemp != -1.0)
-                                storage.saveRecord(Measurement{"Motherboard", moboTemp, timestamp});
-                        } 
-                        else {
-                            if (component == "GPU")
-                                temp = sensorData.getGPUTemperature();
-                            else if (component == "CPU")
-                                temp = sensorData.getCPUTemperature();
-                            else if (component == "Motherboard")
-                                temp = sensorData.getMotherboardTemperature();
-
-                            if (temp != -1.0) {
-                                storage.saveRecord(Measurement{component, temp, sensorData.getTimestamp()});
-                                cout << "📝 Recorded " << component << " temperature: " << temp << "°C\n";
-                            }
-                        }
-                    } 
-                    catch (...) {
-                        cerr << "❌ Error processing sensor data\n";
-                    }
-                }
-
-                if (duration > 0) {
-                    elapsedSeconds += interval;
-                    if (elapsedSeconds >= duration) {
-                        monitoring = false;
-                    }
-                }
-
-                if (monitoring) {
-                    std::this_thread::sleep_for(std::chrono::seconds(interval));
-                }
-
-                if (duration == 0 && kbhit()) {
-                    monitoring = false;
-                }
-            }
-
-            cout << "✅ Monitoring completed.\n";
-            return;
-        }
-        catch (const exception& e) {
-            cout << "Invalid input. Please enter a valid number.\n";
         }
     }
 }
@@ -395,65 +259,6 @@ void runCLI() {
         } 
         catch (const exception& e) {
             cout << "Error: " << e.what() << "\n";
-        }
-    }
-}
-
-/**
- * @brief Fetches OHM data and saves a single record for a specific component.
- * 
- * @param componentName
- *   Name of the hardware component to record.
- */
-void addSingleRecord(const std::string &componentName) {
-    std::string ohmJsonString = fetchOHMData(OHM_URL);
-    if (ohmJsonString.empty()) {
-        std::cerr << "❌ Failed to fetch OHM data.\n";
-        return;
-    }
-
-    json ohmData;
-    try {
-        ohmData = json::parse(ohmJsonString);
-    } 
-    catch (...) {
-        std::cerr << "❌ Error parsing JSON data from OHM!\n";
-        return;
-    }
-
-    OHMData sensorData(ohmData);
-    static StorageManager storage;
-
-    if (componentName == "All components") {
-        double gpuTemp = sensorData.getGPUTemperature();
-        double cpuTemp = sensorData.getCPUTemperature();
-        double moboTemp = sensorData.getMotherboardTemperature();
-        long long timestamp = sensorData.getTimestamp();
-
-        if (gpuTemp != -1.0) {
-            storage.saveRecord(Measurement{"GPU", gpuTemp, timestamp});
-        }
-        if (cpuTemp != -1.0) {
-            storage.saveRecord(Measurement{"CPU", cpuTemp, timestamp});
-        }
-        if (moboTemp != -1.0) {
-            storage.saveRecord(Measurement{"Motherboard", moboTemp, timestamp});
-        }
-    } 
-    else {
-        double temp = -1.0;
-        if (componentName == "GPU") {
-            temp = sensorData.getGPUTemperature();
-        }
-        else if (componentName == "CPU") {
-            temp = sensorData.getCPUTemperature();
-        }
-        else if (componentName == "Motherboard") {
-            temp = sensorData.getMotherboardTemperature();
-        }
-
-        if (temp != -1.0) {
-            storage.saveRecord(Measurement{componentName, temp, sensorData.getTimestamp()});
         }
     }
 }
