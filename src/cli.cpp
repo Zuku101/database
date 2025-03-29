@@ -1,17 +1,35 @@
-#include <iostream>
+// Standard library headers
+#include <chrono>
 #include <functional>
-#include <map>
+#include <iostream>
 #include <limits>
+#include <map>
+#include <sys/select.h>
+#include <termios.h>
+#include <thread>
+#include <unistd.h>
+
+// Third-party libraries
+#include <nlohmann/json.hpp>
+
+// Project headers
 #include "cli.h"
+#include "config.h"
 #include "config_handler.h"
-#include "storage.h"
 #include "measurement.h"
 #include "ohm_api.h"
-#include <iostream>
-#include <chrono>
-#include <nlohmann/json.hpp>
-#include "config.h"
 #include "ohm_data.h"
+#include "storage.h"
+
+namespace {
+    bool kbhit() {
+        struct timeval tv = {0L, 0L};
+        fd_set fds;
+        FD_ZERO(&fds);
+        FD_SET(0, &fds);
+        return select(1, &fds, NULL, NULL, &tv) > 0;
+    }
+}
 
 using namespace std;
 using json = nlohmann::json;
@@ -211,14 +229,74 @@ void handleMonitoring(const string& component) {
                 continue;
             }
 
-            if (duration == 0) {
-                cout << "Monitoring " << component << " continuously. Press any key to stop...\n";
-                // TODO: Implement continuous monitoring
-                cin.get(); // Wait for key press
-            } else {
-                cout << "Monitoring " << component << " for " << duration << " seconds...\n";
-                // TODO: Implement timed monitoring
+            static StorageManager storage;
+            bool monitoring = true;
+            int elapsedSeconds = 0;
+            
+            cout << "📊 Starting monitoring for " << component << "...\n";
+
+            while (monitoring) {
+                // Fetch and save measurement
+                std::string ohmJsonString = fetchOHMData(OHM_URL);
+                if (!ohmJsonString.empty()) {
+                    try {
+                        json ohmData = json::parse(ohmJsonString);
+                        OHMData sensorData(ohmData);
+                        
+                        double temp = -1.0;
+                        if (component == "All components") {
+                            // Handle all components
+                            double gpuTemp = sensorData.getGPUTemperature();
+                            double cpuTemp = sensorData.getCPUTemperature();
+                            double moboTemp = sensorData.getMotherboardTemperature();
+                            long long timestamp = sensorData.getTimestamp();
+
+                            if (gpuTemp != -1.0) 
+                                storage.saveRecord(Measurement{"GPU", gpuTemp, timestamp});
+                            if (cpuTemp != -1.0)
+                                storage.saveRecord(Measurement{"CPU", cpuTemp, timestamp});
+                            if (moboTemp != -1.0)
+                                storage.saveRecord(Measurement{"Motherboard", moboTemp, timestamp});
+                        } else {
+                            // Handle single component
+                            if (component == "GPU")
+                                temp = sensorData.getGPUTemperature();
+                            else if (component == "CPU")
+                                temp = sensorData.getCPUTemperature();
+                            else if (component == "Motherboard")
+                                temp = sensorData.getMotherboardTemperature();
+
+                            if (temp != -1.0) {
+                                storage.saveRecord(Measurement{component, temp, sensorData.getTimestamp()});
+                                cout << "📝 Recorded " << component << " temperature: " << temp << "°C\n";
+                            }
+                        }
+                    } 
+                    catch (...) {
+                        cerr << "❌ Error processing sensor data\n";
+                    }
+                }
+
+                // Check if we should continue monitoring
+                if (duration > 0) {
+                    elapsedSeconds++;
+                    if (elapsedSeconds >= duration) {
+                        monitoring = false;
+                    }
+                }
+
+                // Wait for 1 second before next measurement
+                if (monitoring) {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+
+                // For continuous monitoring (duration = 0), check for key press
+                if (duration == 0 && kbhit()) {
+                    monitoring = false;
+                }
             }
+
+            cout << "✅ Monitoring completed.\n";
             return;
         }
         catch (const exception& e) {
