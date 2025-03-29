@@ -11,6 +11,7 @@
 #include <chrono>
 #include <nlohmann/json.hpp>
 #include "config.h"
+#include "ohm_data.h"
 
 using namespace std;
 using json = nlohmann::json;
@@ -308,79 +309,6 @@ void runCLI() {
 }
 
 /**
- * @brief Fetches temperature data for a specific sensor.
- * 
- * @param device
- *   JSON object containing device sensor data
- * @param sensorName
- *   Name of the temperature sensor to find
- *
- * @return string
- *   Temperature value in Celsius, -1.0 if not found
- */
-double findTemperature(const json &device, const std::string &sensorName) {
-    for (const auto &sensorCategory : device["Children"]) {
-        if (sensorCategory.contains("Text") && sensorCategory["Text"] == "Temperatures") {
-            for (const auto &sensor : sensorCategory["Children"]) {
-                if (sensor.contains("Text") && sensor["Text"] == sensorName && sensor.contains("Value")) {
-                    std::string valueStr = sensor["Value"].get<std::string>();
-                    valueStr.erase(valueStr.find(" °C"), 3);
-                    return std::stod(valueStr);
-                }
-            }
-        }
-    }
-    return -1.0;
-}
-
-/**
- * @brief Fetches OHM data and extracts temperature for a component.
- * 
- * @param componentName
- *   Name of the component to get temperature for
- * @param ohmData
- *   JSON object containing OHM sensor data
- *
- * @return string
- *   Temperature value in Celsius, -1.0 if not found
- */
-double extractTemperature(const std::string &componentName, const json &ohmData) {
-    if (!ohmData.contains("Children") || !ohmData["Children"].is_array()) {
-        std::cerr << "❌ No data or invalid data format from OHM!\n";
-        return -1.0;
-    }
-
-    for (const auto &systemNode : ohmData["Children"]) {
-        if (!systemNode.contains("Children")) continue;
-
-        for (const auto &motherboardNode : systemNode["Children"]) {
-            if (!motherboardNode.contains("Text") || !motherboardNode.contains("Children")) continue;
-
-            std::string deviceName = motherboardNode["Text"].get<std::string>();
-
-            if (componentName == "Motherboard" && 
-                deviceName.find("MSI MPG Z390") != std::string::npos) {
-                
-                for (const auto &chipNode : motherboardNode["Children"]) {
-                    if (chipNode["Text"].get<std::string>().find("Nuvoton") != std::string::npos) {
-                        return findTemperature(chipNode, "CPU Core");
-                    }
-                }
-            }
-            else if (componentName == "CPU" && deviceName.find("Intel") != std::string::npos) {
-                return findTemperature(motherboardNode, "CPU Package");
-            }
-            else if (componentName == "GPU" && deviceName.find("NVIDIA") != std::string::npos) {
-                return findTemperature(motherboardNode, "GPU Core");
-            }
-        }
-    }
-
-    std::cerr << "⚠️ Component '" << componentName << "' not found in OHM data!\n";
-    return -1.0;
-}
-
-/**
  * @brief Fetches OHM data and saves a single record for a specific component.
  * 
  * @param componentName
@@ -402,26 +330,39 @@ void addSingleRecord(const std::string &componentName) {
         return;
     }
 
-    auto now = std::chrono::system_clock::now();
-    long long epochSeconds = std::chrono::duration_cast<std::chrono::seconds>(
-        now.time_since_epoch()
-    ).count();
-
+    OHMData sensorData(ohmData);
     static StorageManager storage;
 
     if (componentName == "All components") {
-        std::vector<std::string> components = {"GPU", "CPU", "Motherboard"};
-        for (const auto& comp : components) {
-            double temp = extractTemperature(comp, ohmData);
-            if (temp != -1.0) {
-                storage.saveRecord(Measurement{comp, temp, epochSeconds});
-            }
+        double gpuTemp = sensorData.getGPUTemperature();
+        double cpuTemp = sensorData.getCPUTemperature();
+        double moboTemp = sensorData.getMotherboardTemperature();
+        long long timestamp = sensorData.getTimestamp();
+
+        if (gpuTemp != -1.0) {
+            storage.saveRecord(Measurement{"GPU", gpuTemp, timestamp});
+        }
+        if (cpuTemp != -1.0) {
+            storage.saveRecord(Measurement{"CPU", cpuTemp, timestamp});
+        }
+        if (moboTemp != -1.0) {
+            storage.saveRecord(Measurement{"Motherboard", moboTemp, timestamp});
         }
     } 
     else {
-        double temp = extractTemperature(componentName, ohmData);
+        double temp = -1.0;
+        if (componentName == "GPU") {
+            temp = sensorData.getGPUTemperature();
+        }
+        else if (componentName == "CPU") {
+            temp = sensorData.getCPUTemperature();
+        }
+        else if (componentName == "Motherboard") {
+            temp = sensorData.getMotherboardTemperature();
+        }
+
         if (temp != -1.0) {
-            storage.saveRecord(Measurement{componentName, temp, epochSeconds});
+            storage.saveRecord(Measurement{componentName, temp, sensorData.getTimestamp()});
         }
     }
 }

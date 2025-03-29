@@ -2,7 +2,7 @@
 #define CLI_H
 
 /**
- * Starts the CLI menu loop.
+ * Starts the CLI menu.
  */
 void runCLI();
 

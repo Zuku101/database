@@ -21,5 +21,6 @@ int main() {
     }
 
     runCLI();
+    
     return 0;
 }

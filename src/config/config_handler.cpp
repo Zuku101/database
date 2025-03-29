@@ -3,11 +3,26 @@
 #include <vector>
 #include <stdexcept>
 
+/**
+ * @brief Gets the singleton instance of ConfigHandler.
+ *
+ * @return ConfigHandler&
+ *   Reference to the singleton instance of ConfigHandler
+ */
 ConfigHandler& ConfigHandler::getInstance() {
     static ConfigHandler instance;
     return instance;
 }
 
+/**
+ * @brief Loads component identifiers from config file.
+ *
+ * @param filepath
+ *   Path to the configuration file
+ *
+ * @throws runtime_error
+ *   If config file cannot be opened or is invalid
+ */
 void ConfigHandler::loadConfig(const std::string& filepath) {
     std::ifstream file(filepath);
     if (!file.is_open()) {
@@ -30,6 +45,18 @@ void ConfigHandler::loadConfig(const std::string& filepath) {
     validateConfig();
 }
 
+/**
+ * @brief Gets identifier string for specified component.
+ *
+ * @param component
+ *   Component name (CPU/GPU/MOTHERBOARD/CHIP)
+ *
+ * @return string
+ *   Component identifier string from config
+ *
+ * @throws runtime_error
+ *   If component is not found in config
+ */
 const std::string& ConfigHandler::getComponentIdentifier(const std::string& component) const {
     auto it = components.find(component);
     if (it == components.end()) {
@@ -38,6 +65,12 @@ const std::string& ConfigHandler::getComponentIdentifier(const std::string& comp
     return it->second;
 }
 
+/**
+ * @brief Validates that all required components are present in config.
+ *
+ * @throws runtime_error
+ *   If any required component is missing or empty
+ */
 void ConfigHandler::validateConfig() {
     std::vector<std::string> required = {"CPU", "GPU", "MOTHERBOARD", "CHIP"};
     for (const auto& comp : required) {
