@@ -21,6 +21,7 @@
 #include "ohm_api.h"
 #include "ohm_data.h"
 #include "storage.h"
+#include "file_source.h" 
 
 using namespace std;
 using json = nlohmann::json;
@@ -191,7 +192,7 @@ void showOperationMenu(OperationType opType, const string& title,
 void runCLI() {
     try {
         ConfigHandler::getInstance().loadConfig("../conf/components.conf");
-    }
+    } 
     catch (const std::exception& e) {
         std::cerr << "Configuration error: " << e.what() << std::endl;
         std::cerr << "Please fill in the components.conf file with appropriate component identifiers." << std::endl;
@@ -199,31 +200,67 @@ void runCLI() {
     }
 
     map<int, MenuItem> mainMenu = {
-        {1, {"Add", []() { 
+        {1, {"Add", []() {
             showOperationMenu(OperationType::ADD, "Add Component", nullptr);
         }}},
+
         {2, {"Monitor", []() {
             showOperationMenu(OperationType::MONITOR, "Monitor Component", nullptr);
         }}},
-        {3, {"List", []() { 
+
+        {3, {"List", []() {
             showOperationMenu(OperationType::LIST, "List Component",
                 [](const string& comp, int count, bool fromStart) {
-                    cout << "Displaying " << (count == 0 ? "all" : to_string(count)) 
-                         << " records for " << comp << "...\n";
-                });
-        }}},        
-        {4, {"Export", []() { 
-            showOperationMenu(OperationType::EXPORT, "Export Component",
-                [](const string& comp, int count, bool fromStart) {
-                    cout << "Exporting " << (count == 0 ? "all" : to_string(count)) 
-                         << " records for " << comp << "...\n";
+                    try {
+                        FileSource source;
+                        auto records = source.getMeasurements(comp, count, fromStart);
+
+                        cout << "📋 Showing " << records.size()
+                             << " record(s) for " << comp << ":\n";
+                        for (const auto& r : records) {
+                            cout << " - Temp: " << r.temperature << "°C"
+                                 << ", Timestamp: " << r.timestamp << "\n";
+                        }
+                    } 
+                    catch (const std::exception& e) {
+                        cerr << "❌ Error: " << e.what() << endl;
+                    }
                 });
         }}},
-        {5, {"Delete", []() { 
+
+        {4, {"Export", []() {
+            showOperationMenu(OperationType::EXPORT, "Export Component",
+                [](const string& comp, int count, bool fromStart) {
+                    try {
+                        FileSource source;
+                        source.exportToCSV(comp, count, fromStart);
+                    } 
+                    catch (const std::exception& e) {
+                        cerr << "❌ Error: " << e.what() << endl;
+                    }
+                });
+        }}},
+
+        {5, {"Delete", []() {
             showOperationMenu(OperationType::DELETE, "Delete Component",
                 [](const string& comp, int count, bool fromStart) {
-                    cout << "Deleting " << (count == 0 ? "all" : to_string(count)) 
-                         << " records for " << comp << "...\n";
+                    try {
+                        FileSource source;
+
+                        if (comp == "All components") {
+                            source.deleteMeasurements("All components", count, fromStart);
+                            cout << "🗑️ Deleted " << (count == 0 ? "all" : to_string(count))
+                                 << " record(s) from all_measurements.json.\n";
+                        } 
+                        else {
+                            source.deleteMeasurements(comp, count, fromStart);
+                            cout << "🗑️ Deleted " << (count == 0 ? "all" : to_string(count))
+                                 << " record(s) for " << comp << ".\n";
+                        }
+                    } 
+                    catch (const std::exception& e) {
+                        cerr << "❌ Error: " << e.what() << endl;
+                    }
                 });
         }}}
     };
@@ -236,6 +273,7 @@ void runCLI() {
         }
         cout << "6. Exit\n";
         cout << "Select an option: ";
+
         if (!(cin >> input)) {
             clearInputBuffer();
             cout << "Invalid input. Please enter a number.\n";
@@ -248,7 +286,7 @@ void runCLI() {
                 cout << "Exiting program...\n";
                 return;
             }
-            
+
             auto it = mainMenu.find(choice);
             if (it != mainMenu.end()) {
                 it->second.action();

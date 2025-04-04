@@ -1,4 +1,5 @@
 #include "measurement_handler.h"
+#include "ohm_source.h" // dodaj to
 #include "ohm_api.h"
 #include "ohm_data.h"
 #include "config.h"  // for OHM_URL
@@ -28,6 +29,10 @@ void MeasurementHandler::clearInputBuffer() {
     cin.clear();
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 }
+
+MeasurementHandler::MeasurementHandler() {
+                source = std::make_unique<OHMSource>();
+            }
 
 /**
  * @brief Handles component monitoring with duration.
@@ -74,7 +79,6 @@ void MeasurementHandler::handleMonitoring(const std::string& component) {
                 continue;
             }
 
-            static StorageManager storage;
             bool monitoring = true;
             int elapsedSeconds = 0;
             
@@ -85,42 +89,28 @@ void MeasurementHandler::handleMonitoring(const std::string& component) {
                 std::string ohmJsonString = fetchOHMData(OHM_URL);
                 if (!ohmJsonString.empty()) {
                     try {
-                        json ohmData = json::parse(ohmJsonString);
-                        OHMData sensorData(ohmData);
-                        
-                        double temp = -1.0;
                         if (component == "All components") {
-                            double gpuTemp = sensorData.getGPUTemperature();
-                            double cpuTemp = sensorData.getCPUTemperature();
-                            double moboTemp = sensorData.getMotherboardTemperature();
-                            long long timestamp = sensorData.getTimestamp();
-
-                            if (gpuTemp != -1.0) 
-                                storage.saveRecord(Measurement{"GPU", gpuTemp, timestamp});
-                            if (cpuTemp != -1.0)
-                                storage.saveRecord(Measurement{"CPU", cpuTemp, timestamp});
-                            if (moboTemp != -1.0)
-                                storage.saveRecord(Measurement{"Motherboard", moboTemp, timestamp});
-                        } 
-                        else {
-                            if (component == "GPU")
-                                temp = sensorData.getGPUTemperature();
-                            else if (component == "CPU")
-                                temp = sensorData.getCPUTemperature();
-                            else if (component == "Motherboard")
-                                temp = sensorData.getMotherboardTemperature();
-
-                            if (temp != -1.0) {
-                                storage.saveRecord(Measurement{component, temp, sensorData.getTimestamp()});
-                                cout << "📝 Recorded " << component << " temperature: " << temp << "°C\n";
+                        std::vector<std::string> comps = {"GPU", "CPU", "Motherboard"};
+                        for (const auto& comp : comps) {
+                            try {
+                                Measurement m = source->getMeasurement(comp);
+                                storage.saveRecord(m);
+                                std::cout << "📝 Recorded " << comp << " temperature: " 
+                                << m.temperature << "°C\n";
+                            } catch (const std::exception& e) {
+                                std::cerr << "⚠️  Skipping " << comp << ": " << e.what() << "\n";
                             }
                         }
-                    } 
-                    catch (...) {
-                        cerr << "❌ Error processing sensor data\n";
+                    } else {
+                        Measurement m = source->getMeasurement(component);
+                        storage.saveRecord(m);
+                        std::cout << "📝 Recorded " << component << " temperature: " 
+                        << m.temperature << "°C\n";
                     }
+                } catch (...) {
+                    std::cerr << "❌ Error fetching or saving data.\n";
                 }
-
+            }
                 if (duration > 0) {
                     elapsedSeconds += interval;
                     if (elapsedSeconds >= duration) {
@@ -153,54 +143,27 @@ void MeasurementHandler::handleMonitoring(const std::string& component) {
  *   Name of the hardware component to record.
  */
 void MeasurementHandler::addSingleRecord(const std::string& componentName) {
-std::string ohmJsonString = fetchOHMData(OHM_URL);
-    if (ohmJsonString.empty()) {
-        std::cerr << "❌ Failed to fetch OHM data.\n";
-        return;
-    }
-
-    json ohmData;
-    try {
-        ohmData = json::parse(ohmJsonString);
-    } 
-    catch (...) {
-        std::cerr << "❌ Error parsing JSON data from OHM!\n";
-        return;
-    }
-
-    OHMData sensorData(ohmData);
-    static StorageManager storage;
-
     if (componentName == "All components") {
-        double gpuTemp = sensorData.getGPUTemperature();
-        double cpuTemp = sensorData.getCPUTemperature();
-        double moboTemp = sensorData.getMotherboardTemperature();
-        long long timestamp = sensorData.getTimestamp();
-
-        if (gpuTemp != -1.0) {
-            storage.saveRecord(Measurement{"GPU", gpuTemp, timestamp});
-        }
-        if (cpuTemp != -1.0) {
-            storage.saveRecord(Measurement{"CPU", cpuTemp, timestamp});
-        }
-        if (moboTemp != -1.0) {
-            storage.saveRecord(Measurement{"Motherboard", moboTemp, timestamp});
+        std::vector<std::string> comps = {"GPU", "CPU", "Motherboard"};
+        for (const auto& comp : comps) {
+            try {
+                Measurement m = source->getMeasurement(comp);
+                storage.saveRecord(m);
+                std::cout << "📝 Recorded " << comp << " temperature: " 
+                          << m.temperature << "°C\n";
+            } catch (const std::exception& e) {
+                std::cerr << "⚠️  Skipping " << comp << ": " << e.what() << "\n";
+            }
         }
     } 
     else {
-        double temp = -1.0;
-        if (componentName == "GPU") {
-            temp = sensorData.getGPUTemperature();
-        }
-        else if (componentName == "CPU") {
-            temp = sensorData.getCPUTemperature();
-        }
-        else if (componentName == "Motherboard") {
-            temp = sensorData.getMotherboardTemperature();
-        }
-
-        if (temp != -1.0) {
-            storage.saveRecord(Measurement{componentName, temp, sensorData.getTimestamp()});
+        try {
+            Measurement m = source->getMeasurement(componentName);
+            storage.saveRecord(m);
+            std::cout << "📝 Recorded " << componentName << " temperature: " 
+                      << m.temperature << "°C\n";
+        } catch (const std::exception& e) {
+            std::cerr << "❌ Error: " << e.what() << "\n";
         }
     }
 }
