@@ -1,4 +1,6 @@
 #pragma once
+
+// Project headers
 #include "inputs/data_source.h"
 
 /**
@@ -6,7 +8,30 @@
  */
 class OHMSource : public DataSource {
 public:
-    Measurement getMeasurement(const std::string& component) override;
 
-    void deleteMeasurements(const std::string& component, int count, bool fromStart) override;
+  /**
+   * @brief Retrieves a temperature measurement for the specified component.
+   *
+   * @param component std::string
+   *   Name of the hardware component
+   *
+   * @return Measurement
+   *   Component name, temperature, and timestamp
+   */
+  Measurement getMeasurement(const std::string& component) override;
+
+  /**
+   * @brief Not supported for OHMSource.
+   *
+   * @param component std::string
+   *   Unused
+   * @param count int
+   *   Unused
+   * @param fromStart bool
+   *   Unused
+   *
+   * @return void
+   *   Always throws std::runtime_error
+   */
+  void deleteMeasurements(const std::string& component, int count, bool fromStart) override;
 };

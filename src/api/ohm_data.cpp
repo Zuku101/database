@@ -7,8 +7,9 @@
  * @param data
  *   JSON data from OpenHardwareMonitor containing sensor readings
  */
-OHMData::OHMData(const nlohmann::json& data) 
-    : rawData(data), timestamp(std::chrono::system_clock::now()) {}
+OHMData::OHMData(const nlohmann::json& data)
+    : rawData(data), timestamp(std::chrono::system_clock::now()) {
+}
 
 /**
  * @brief Gets GPU temperature from sensor data.
@@ -17,7 +18,7 @@ OHMData::OHMData(const nlohmann::json& data)
  *   GPU temperature in Celsius, -1.0 if not found
  */
 double OHMData::getGPUTemperature() const {
-    return findComponent("NVIDIA", "GPU Core");
+  return findComponent("NVIDIA", "GPU Core");
 }
 
 /**
@@ -27,7 +28,7 @@ double OHMData::getGPUTemperature() const {
  *   CPU temperature in Celsius, -1.0 if not found
  */
 double OHMData::getCPUTemperature() const {
-    return findComponent("Intel", "CPU Package");
+  return findComponent("Intel", "CPU Package");
 }
 
 /**
@@ -37,7 +38,7 @@ double OHMData::getCPUTemperature() const {
  *   Motherboard temperature in Celsius, -1.0 if not found
  */
 double OHMData::getMotherboardTemperature() const {
-    return findMotherboardTemperature();
+  return findMotherboardTemperature();
 }
 
 /**
@@ -47,9 +48,7 @@ double OHMData::getMotherboardTemperature() const {
  *   Unix timestamp in seconds
  */
 long long OHMData::getTimestamp() const {
-    return std::chrono::duration_cast<std::chrono::seconds>(
-        timestamp.time_since_epoch()
-    ).count();
+  return std::chrono::duration_cast<std::chrono::seconds>(timestamp.time_since_epoch()).count();
 }
 
 /**
@@ -63,26 +62,28 @@ long long OHMData::getTimestamp() const {
  * @return double
  *   Temperature in Celsius, -1.0 if not found
  */
-double OHMData::findComponent(const std::string& deviceIdentifier, const std::string& sensorName) const {
-    if (!rawData.contains("Children") || !rawData["Children"].is_array()) {
-        return -1.0;
-    }
-
-    for (const auto& systemNode : rawData["Children"]) {
-        if (!systemNode.contains("Children")) continue;
-
-        for (const auto& motherboardNode : systemNode["Children"]) {
-            if (!motherboardNode.contains("Text") || 
-                !motherboardNode.contains("Children")) continue;
-
-            std::string deviceName = motherboardNode["Text"].get<std::string>();
-            if (deviceName.find(deviceIdentifier) != std::string::npos) {
-                return findTemperature(motherboardNode, sensorName);
-            }
-        }
-    }
-
+double OHMData::findComponent(const std::string& deviceIdentifier,
+                              const std::string& sensorName) const {
+  if (!rawData.contains("Children") || !rawData["Children"].is_array()) {
     return -1.0;
+  }
+
+  for (const auto& systemNode : rawData["Children"]) {
+    if (!systemNode.contains("Children"))
+      continue;
+
+    for (const auto& motherboardNode : systemNode["Children"]) {
+      if (!motherboardNode.contains("Text") || !motherboardNode.contains("Children"))
+        continue;
+
+      std::string deviceName = motherboardNode["Text"].get<std::string>();
+      if (deviceName.find(deviceIdentifier) != std::string::npos) {
+        return findTemperature(motherboardNode, sensorName);
+      }
+    }
+  }
+
+  return -1.0;
 }
 
 /**
@@ -92,29 +93,30 @@ double OHMData::findComponent(const std::string& deviceIdentifier, const std::st
  *   Motherboard temperature in Celsius, -1.0 if not found
  */
 double OHMData::findMotherboardTemperature() const {
-    if (!rawData.contains("Children") || !rawData["Children"].is_array()) {
-        return -1.0;
-    }
-
-    for (const auto& systemNode : rawData["Children"]) {
-        if (!systemNode.contains("Children")) continue;
-
-        for (const auto& motherboardNode : systemNode["Children"]) {
-            if (!motherboardNode.contains("Text") || 
-                !motherboardNode.contains("Children")) continue;
-
-            std::string deviceName = motherboardNode["Text"].get<std::string>();
-            if (deviceName.find("MSI MPG Z390") != std::string::npos) {
-                for (const auto& chipNode : motherboardNode["Children"]) {
-                    if (chipNode["Text"].get<std::string>().find("Nuvoton") != std::string::npos) {
-                        return findTemperature(chipNode, "CPU Core");
-                    }
-                }
-            }
-        }
-    }
-    
+  if (!rawData.contains("Children") || !rawData["Children"].is_array()) {
     return -1.0;
+  }
+
+  for (const auto& systemNode : rawData["Children"]) {
+    if (!systemNode.contains("Children"))
+      continue;
+
+    for (const auto& motherboardNode : systemNode["Children"]) {
+      if (!motherboardNode.contains("Text") || !motherboardNode.contains("Children"))
+        continue;
+
+      std::string deviceName = motherboardNode["Text"].get<std::string>();
+      if (deviceName.find("MSI MPG Z390") != std::string::npos) {
+        for (const auto& chipNode : motherboardNode["Children"]) {
+          if (chipNode["Text"].get<std::string>().find("Nuvoton") != std::string::npos) {
+            return findTemperature(chipNode, "CPU Core");
+          }
+        }
+      }
+    }
+  }
+
+  return -1.0;
 }
 
 /**
@@ -129,20 +131,17 @@ double OHMData::findMotherboardTemperature() const {
  *   Temperature in Celsius, -1.0 if not found
  */
 double OHMData::findTemperature(const nlohmann::json& device, const std::string& sensorName) const {
-    for (const auto& sensorCategory : device["Children"]) {
-        if (sensorCategory.contains("Text") && 
-            sensorCategory["Text"] == "Temperatures") {
-            for (const auto& sensor : sensorCategory["Children"]) {
-                if (sensor.contains("Text") && 
-                    sensor["Text"] == sensorName && 
-                    sensor.contains("Value")) {
-                    std::string valueStr = sensor["Value"].get<std::string>();
-                    valueStr.erase(valueStr.find(" °C"), 3);
-                    return std::stod(valueStr);
-                }
-            }
+  for (const auto& sensorCategory : device["Children"]) {
+    if (sensorCategory.contains("Text") && sensorCategory["Text"] == "Temperatures") {
+      for (const auto& sensor : sensorCategory["Children"]) {
+        if (sensor.contains("Text") && sensor["Text"] == sensorName && sensor.contains("Value")) {
+          std::string valueStr = sensor["Value"].get<std::string>();
+          valueStr.erase(valueStr.find(" °C"), 3);
+          return std::stod(valueStr);
         }
+      }
     }
+  }
 
-    return -1.0;
+  return -1.0;
 }

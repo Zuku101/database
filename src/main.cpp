@@ -12,18 +12,18 @@
  * Main function - Fetches data from OHM and starts the CLI interface.
  */
 int main() {
-    std::cout << "Fetching data from Open Hardware Monitor...\n";
-    std::string data = fetchOHMData(OHM_URL);
-    
-    if (!data.empty()) {
-        std::cout << "Data retrieved successfully! (preview):\n" 
-                  << data.substr(0, 200) << "...\n";
-    } 
-    else {
-        std::cout << "Failed to retrieve data.\n";
-    }
+  std::cout << "Fetching data from Open Hardware Monitor...\n";
+  std::string data = fetchOHMData(OHM_URL);
 
-    runCLI();
-    
-    return 0;
+  if (!data.empty()) {
+    std::cout << "Data retrieved successfully! (preview):\n" << data.substr(0, 200) << "...\n";
+  }
+  else {
+    std::cout << "Failed to retrieve data.\n";
+    return 1;
+  }
+
+  runCLI();
+
+  return 0;
 }

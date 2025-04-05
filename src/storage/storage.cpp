@@ -1,8 +1,8 @@
 // Standard library headers
 #include <fstream>
 #include <iostream>
-#include <limits.h>
 #include <libgen.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -17,54 +17,53 @@
 using json = nlohmann::json;
 
 /**
- * @brief Saves a record to both `all_measurements.json` and component-specific JSON file.
- * 
- * @param record '
+ * @brief Saves a record to files.
+ *
+ * @param record
  *   Measurement object containing component data (temperature, timestamp)
  */
-void StorageManager::saveRecord(const Measurement &record) {
-    std::string dataDir = getDataDirectory();
-    std::string allJsonFilePath = dataDir + "/all_measurements.json";
-    std::string componentJsonFilePath = dataDir + "/" + record.component + ".json";
+void StorageManager::saveRecord(const Measurement& record) {
+  std::string dataDir = getDataDirectory();
+  std::string allJsonFilePath = dataDir + "/all_measurements.json";
+  std::string componentJsonFilePath = dataDir + "/" + record.component + ".json";
 
-    ensureDataDirectoryExists(dataDir);
+  ensureDataDirectoryExists(dataDir);
 
-    auto saveToJson = [](const std::string &filePath, const json &newRecord) {
-        json data;
+  auto saveToJson = [](const std::string& filePath, const json& newRecord) {
+    json data;
 
-        std::ifstream inputFile(filePath);
-        if (inputFile) {
-            try {
-                inputFile >> data;
-            } catch (...) {
-                data = json::array();
-            }
-            inputFile.close();
-        }
+    std::ifstream inputFile(filePath);
+    if (inputFile) {
+      try {
+        inputFile >> data;
+      }
+      catch (...) {
+        data = json::array();
+      }
+      inputFile.close();
+    }
 
-        data.push_back(newRecord);
+    data.push_back(newRecord);
 
-        std::ofstream file(filePath);
-        if (!file) {
-            std::cerr << "❌ Error: Cannot open JSON file '" << filePath << "' for writing!\n";
-            
-            return;
-        }
-        file << data.dump(4) << std::endl;
-        file.close();
-    };
+    std::ofstream file(filePath);
+    if (!file) {
+      std::cerr << "Error: Cannot open JSON file '" << filePath << "' for writing!\n";
 
-    json newRecord;
-    newRecord["Component"] = record.component;
-    newRecord["Temperature"] = record.temperature;
-    newRecord["Timestamp"] = record.timestamp;
+      return;
+    }
+    file << data.dump(4) << std::endl;
+    file.close();
+  };
 
-    saveToJson(allJsonFilePath, newRecord);
-    saveToJson(componentJsonFilePath, newRecord);
+  json newRecord;
+  newRecord["Component"] = record.component;
+  newRecord["Temperature"] = record.temperature;
+  newRecord["Timestamp"] = record.timestamp;
 
-    IndexManager::getInstance().addIndex(record.component, record.timestamp);
+  saveToJson(allJsonFilePath, newRecord);
+  saveToJson(componentJsonFilePath, newRecord);
 
-    std::cout << "✅ Record saved to:\n"
-              << " - " << allJsonFilePath << "\n"
-              << " - " << componentJsonFilePath << "\n";
+  IndexManager::getInstance().addIndex(record.component, record.timestamp);
+
+  std::cout << "Record saved.\n"
 }

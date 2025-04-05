@@ -1,4 +1,6 @@
 #pragma once
+
+// Standard library headers
 #include <string>
 
 /**
@@ -15,4 +17,4 @@ std::string getDataDirectory();
  * @param dataPath
  *   Path where the directory should be created
  */
-void ensureDataDirectoryExists(const std::string &dataPath);
+void ensureDataDirectoryExists(const std::string& dataPath);
