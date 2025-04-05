@@ -12,7 +12,6 @@
  */
 class StorageManager {
 public:
-
   /**
    * @brief Saves a single record to a file.
    *

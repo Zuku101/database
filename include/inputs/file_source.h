@@ -11,7 +11,6 @@
  */
 class FileSource : public DataSource {
 public:
-
   /**
    * @brief Not implemented for FileSource.
    *

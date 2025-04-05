@@ -8,7 +8,6 @@
  */
 class OHMSource : public DataSource {
 public:
-
   /**
    * @brief Retrieves a temperature measurement for the specified component.
    *

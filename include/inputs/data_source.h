@@ -11,7 +11,6 @@
  */
 class DataSource {
 public:
-
   /**
    * @brief Retrieves measurement for a given component.
    *

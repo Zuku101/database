@@ -9,7 +9,7 @@
 
 /**
  * @brief Retrieves a temperature measurement for a specific component.
- * 
+ *
  * @param component
  *   The name of the hardware component to retrieve data for.
  *

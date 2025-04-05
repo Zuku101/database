@@ -18,7 +18,7 @@ using json = nlohmann::json;
 /**
  * @brief Returns the singleton instance of MeasurementHandler.
  *
- * @return 
+ * @return
  *   Reference to the singleton MeasurementHandler.
  */
 MeasurementHandler& MeasurementHandler::getInstance() {

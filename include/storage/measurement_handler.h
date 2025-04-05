@@ -12,7 +12,6 @@
  */
 class MeasurementHandler {
 public:
-
   /**
    * @brief Gets the singleton instance of MeasurementHandler.
    *
@@ -38,23 +37,22 @@ public:
   void addSingleRecord(const std::string& componentName);
 
 private:
-
   /**
    * @brief Private constructor for singleton pattern.
    */
   MeasurementHandler();
 
-  StorageManager storage; ///< Storage manager instance.
+  StorageManager storage;             ///< Storage manager instance.
   std::unique_ptr<DataSource> source; ///< Source of measurement data.
 
   /**
    * @brief Checks if a key has been pressed (non-blocking).
    *
-   * @return bool 
+   * @return bool
    *   True if a key was pressed, false otherwise.
    */
   bool kbhit() const;
-  
+
   /**
    * @brief Clears the standard input buffer.
    */

@@ -9,7 +9,6 @@
  */
 class ConfigHandler {
 public:
-
   /**
    * @brief Gets singleton instance of ConfigHandler.
    *
@@ -44,7 +43,6 @@ public:
   const std::string& getComponentIdentifier(const std::string& component) const;
 
 private:
-
   /**
    * @brief Private constructor for singleton pattern.
    */

@@ -9,7 +9,6 @@
 
 class OHMData {
 public:
-
   /**
    * @brief Creates OHMData object with sensor readings from JSON.
    *
