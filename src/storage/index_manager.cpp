@@ -1,7 +1,10 @@
-#include "index_manager.h"
-#include "utils.h"
-#include <fstream>
+// Standard library headers
 #include <algorithm>
+#include <fstream>
+
+// Project headers
+#include "storage/index_manager.h"
+#include "utils/utils.h"
 
 /**
  * @brief Gets the singleton instance of IndexManager.

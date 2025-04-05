@@ -1,7 +1,10 @@
-#include "config_handler.h"
+// Standard library headers
 #include <fstream>
-#include <vector>
 #include <stdexcept>
+#include <vector>
+
+// Project headers
+#include "config/config_handler.h"
 
 /**
  * @brief Gets the singleton instance of ConfigHandler.

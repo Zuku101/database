@@ -1,7 +1,10 @@
+// Standard library headers
 #include <iostream>
+
+// Project headers
+#include "api/ohm_api.h"
 #include "cli.h"
-#include "ohm_api.h"
-#include "config.h"
+#include "config/config.h"
 
 // @todo: Exit the program if the data fetch fails
 

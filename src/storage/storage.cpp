@@ -1,13 +1,18 @@
-#include "storage.h"
-#include "index_manager.h"
-#include "utils.h"
-#include <iostream>
+// Standard library headers
 #include <fstream>
+#include <iostream>
+#include <limits.h>
+#include <libgen.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+// Third-party libraries
 #include <nlohmann/json.hpp>
-#include <sys/stat.h>  // mkdir()
-#include <unistd.h>    // access()
-#include <limits.h>    // realpath()
-#include <libgen.h>    // dirname()
+
+// Project headers
+#include "storage/index_manager.h"
+#include "storage/storage.h"
+#include "utils/utils.h"
 
 using json = nlohmann::json;
 

@@ -1,13 +1,16 @@
-#include "measurement_handler.h"
-#include "ohm_source.h" // dodaj to
-#include "ohm_api.h"
-#include "ohm_data.h"
-#include "config.h"  // for OHM_URL
-#include <iostream>
-#include <thread>
+// Standard library headers
 #include <chrono>
+#include <iostream>
 #include <sys/select.h>
+#include <thread>
 #include <unistd.h>
+
+// Project headers
+#include "api/ohm_api.h"
+#include "config/config.h"
+#include "inputs/ohm_source.h"
+#include "ohm_data.h"
+#include "storage/measurement_handler.h"
 
 using namespace std;
 using json = nlohmann::json;

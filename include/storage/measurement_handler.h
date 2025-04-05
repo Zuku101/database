@@ -1,7 +1,7 @@
 #pragma once
-#include <memory> // 💥 konieczne!
-#include "data_source.h"
-#include "storage.h"
+#include <memory>
+#include "inputs/data_source.h"
+#include "storage/storage.h"
 
 class MeasurementHandler {
 public:

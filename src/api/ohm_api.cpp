@@ -1,6 +1,11 @@
+// Standard library headers
 #include <iostream>
+
+// Third-party libraries
 #include <curl/curl.h>
-#include "ohm_api.h"
+
+// Project headers
+#include "api/ohm_api.h"
 
 using namespace std;
 

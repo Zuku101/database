@@ -1,11 +1,15 @@
-#include "file_source.h"
-#include "utils.h"
-#include "index_manager.h"
-
+// Standard library headers
 #include <fstream>
-#include <nlohmann/json.hpp>
 #include <iostream>
 #include <stdexcept>
+
+// Third-party libraries
+#include <nlohmann/json.hpp>
+
+// Project headers
+#include "inputs/file_source.h"
+#include "storage/index_manager.h"
+#include "utils/utils.h"
 
 std::vector<Measurement> FileSource::getMeasurements(const std::string& component, int count, bool fromStart) {
     std::string filePath = getDataDirectory() + "/" + component + ".json";

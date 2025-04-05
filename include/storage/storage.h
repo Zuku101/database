@@ -1,7 +1,7 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
-#include "measurement.h"
+#include "storage/measurement.h"
 #include <string>
 
 /**

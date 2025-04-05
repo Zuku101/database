@@ -1,9 +1,12 @@
-#include "utils.h"
+// Standard library headers
 #include <iostream>
+#include <libgen.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <limits.h>
-#include <libgen.h>
+
+// Project headers
+#include "utils/utils.h"
 
 /**
  * @brief Gets path to the data directory where measurements are stored.

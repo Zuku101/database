@@ -13,15 +13,15 @@
 #include <nlohmann/json.hpp>
 
 // Project headers
+#include "api/ohm_api.h"
 #include "cli.h"
-#include "config.h"
-#include "config_handler.h"
-#include "measurement.h"
-#include "measurement_handler.h"
-#include "ohm_api.h"
+#include "config/config.h"
+#include "config/config_handler.h"
+#include "inputs/file_source.h"
 #include "ohm_data.h"
-#include "storage.h"
-#include "file_source.h" 
+#include "storage/measurement.h"
+#include "storage/measurement_handler.h"
+#include "storage/storage.h"
 
 using namespace std;
 using json = nlohmann::json;

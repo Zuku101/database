@@ -1,9 +1,11 @@
-#include "ohm_source.h"
-#include "ohm_api.h"
-#include "ohm_data.h"
-#include "config.h"
-
+// Standard library headers
 #include <stdexcept>
+
+// Project headers
+#include "api/ohm_api.h"
+#include "config/config.h"
+#include "inputs/ohm_source.h"
+#include "ohm_data.h"
 
 Measurement OHMSource::getMeasurement(const std::string& component) {
     std::string rawJson = fetchOHMData(OHM_URL);
