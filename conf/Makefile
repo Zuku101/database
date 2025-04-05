@@ -9,33 +9,33 @@ EXPORT_DIR = $(DATA_DIR)/export
 JSON_FILE = $(DATA_DIR)/all_measurements.json
 BIN = $(BUILD_DIR)/database
 
-SRCS = $(SRC_DIR)/main.cpp \
-       $(SRC_DIR)/cli.cpp \
+SRCS = $(SRC_DIR)/cli.cpp \
+       $(SRC_DIR)/main.cpp \
        $(SRC_DIR)/api/ohm_api.cpp \
-       $(SRC_DIR)/storage/storage.cpp \
-       $(SRC_DIR)/config/config_handler.cpp \
        $(SRC_DIR)/api/ohm_data.cpp \
-       $(SRC_DIR)/storage/index_manager.cpp \
-       $(SRC_DIR)/utils/utils.cpp \
-       $(SRC_DIR)/storage/measurement_handler.cpp \
+       $(SRC_DIR)/config/config_loader.cpp \
+       $(SRC_DIR)/inputs/file_source.cpp \
        $(SRC_DIR)/inputs/ohm_source.cpp \
-       $(SRC_DIR)/inputs/file_source.cpp
+       $(SRC_DIR)/storage/index_manager.cpp \
+       $(SRC_DIR)/storage/measurement_handler.cpp \
+       $(SRC_DIR)/storage/storage.cpp \
+       $(SRC_DIR)/utils/utils.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
 all: build datadir exportdir jsonfile $(BIN)
 
 build:
-	mkdir -p $(BUILD_DIR)
+	@if [ ! -d $(BUILD_DIR) ]; then echo "Creating $(BUILD_DIR)"; mkdir -p $(BUILD_DIR); fi
 
 datadir:
-	mkdir -p $(DATA_DIR)
+	@if [ ! -d $(DATA_DIR) ]; then echo "Creating $(DATA_DIR)"; mkdir -p $(DATA_DIR); fi
 
 exportdir:
-	mkdir -p $(EXPORT_DIR)
+	@if [ ! -d $(EXPORT_DIR) ]; then echo "Creating $(EXPORT_DIR)"; mkdir -p $(EXPORT_DIR); fi
 
 jsonfile:
-	test -f $(JSON_FILE) || echo "[]" > $(JSON_FILE)
+	@if [ ! -f $(JSON_FILE) ]; then echo "[]" > $(JSON_FILE); fi
 
 $(BIN): $(SRCS)
 	$(CC) $(CFLAGS) -o $(BIN) $(SRCS) $(LDFLAGS)
@@ -43,5 +43,5 @@ $(BIN): $(SRCS)
 clean:
 	rm -rf $(BUILD_DIR)
 
-run: all
-	$(BIN)
+run:
+	@$(BIN) || true
