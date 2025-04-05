@@ -14,6 +14,7 @@
  */
 IndexManager& IndexManager::getInstance() {
   static IndexManager instance;
+
   return instance;
 }
 

@@ -65,5 +65,5 @@ void StorageManager::saveRecord(const Measurement& record) {
 
   IndexManager::getInstance().addIndex(record.component, record.timestamp);
 
-  std::cout << "Record saved.\n"
+  std::cout << "Record saved.\n";
 }

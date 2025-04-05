@@ -16,5 +16,4 @@ conf/components.conf
 
 .vscode/
 .idea/
-.clang-format
 *.code-workspace

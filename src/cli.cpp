@@ -14,11 +14,10 @@
 
 // Project headers
 #include "api/ohm_api.h"
+#include "api/ohm_data.h"
 #include "cli.h"
 #include "config/config.h"
-#include "config/config_handler.h"
 #include "inputs/file_source.h"
-#include "ohm_data.h"
 #include "storage/measurement.h"
 #include "storage/measurement_handler.h"
 #include "storage/storage.h"
@@ -87,6 +86,7 @@ void handleRecords(const string& operationName, const string& component, ActionF
 
     if (input == "exit" || input == "e") {
       cout << "Returning to " << operationName << " Menu...\n";
+
       return;
     }
 
@@ -110,6 +110,7 @@ void handleRecords(const string& operationName, const string& component, ActionF
       }
 
       action(component, recordCount, fromStart);
+
       return;
     }
     catch (const exception& e) {
@@ -148,6 +149,7 @@ void showOperationMenu(OperationType opType, const string& title,
 
     if (choice == 5)
       return;
+
     if (choice < 1 || choice > 4) {
       cout << "Invalid option, please try again.\n";
       continue;
@@ -178,16 +180,6 @@ void showOperationMenu(OperationType opType, const string& title,
  *          Contains options: Add, Monitor, List, Export, Delete and Exit
  */
 void runCLI() {
-  try {
-    ConfigHandler::getInstance().loadConfig("../conf/components.conf");
-  }
-  catch (const std::exception& e) {
-    std::cerr << "Configuration error: " << e.what() << std::endl;
-    std::cerr << "Please fill in the components.conf file with appropriate component identifiers."
-              << std::endl;
-    return;
-  }
-
   map<int, MenuItem> mainMenu = {
       {1, {"Add", []() { showOperationMenu(OperationType::ADD, "Add Component", nullptr); }}},
 
@@ -276,6 +268,7 @@ void runCLI() {
       int choice = stoi(input);
       if (choice == 6) {
         cout << "Exiting program...\n";
+
         return;
       }
 

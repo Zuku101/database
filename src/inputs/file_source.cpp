@@ -285,7 +285,8 @@ void FileSource::exportToCSV(const std::string& component, int count, bool fromS
       out << m.component << "," << m.temperature << "," << m.timestamp << "\n";
     }
 
-    std::cout << "✅ Exported " << measurements.size() << " record(s) to " << filePath << "\n";
+    std::cout << "Exported " << measurements.size() << " record(s) to " << filePath << "\n";
+
     return;
   }
 

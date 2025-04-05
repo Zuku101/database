@@ -5,22 +5,28 @@
 #include "api/ohm_api.h"
 #include "cli.h"
 #include "config/config.h"
-
-// @todo: Exit the program if the data fetch fails
+#include "config/config_loader.h"
 
 /**
  * Main function - Fetches data from OHM and starts the CLI interface.
  */
 int main() {
-  std::cout << "Fetching data from Open Hardware Monitor...\n";
   std::string data = fetchOHMData(OHM_URL);
 
-  if (!data.empty()) {
-    std::cout << "Data retrieved successfully! (preview):\n" << data.substr(0, 200) << "...\n";
-  }
-  else {
+  if (data.empty()) {
     std::cout << "Failed to retrieve data.\n";
-    return 1;
+
+    return 0;
+  }
+
+  try {
+    ConfigLoader::loadConfig("../conf/components.conf");
+    ConfigLoader::validate();
+  }
+  catch (const std::exception& e) {
+    std::cerr << "Error loading configuration: " << e.what() << std::endl;
+
+    return 0;
   }
 
   runCLI();

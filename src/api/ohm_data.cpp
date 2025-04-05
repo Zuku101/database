@@ -1,5 +1,6 @@
 // Project headers
-#include "ohm_data.h"
+#include "api/ohm_data.h"
+#include "config/config_loader.h"
 
 /**
  * @brief Constructs OHMData object with provided JSON data and current timestamp.
@@ -18,7 +19,7 @@ OHMData::OHMData(const nlohmann::json& data)
  *   GPU temperature in Celsius, -1.0 if not found
  */
 double OHMData::getGPUTemperature() const {
-  return findComponent("NVIDIA", "GPU Core");
+  return findComponent(ConfigLoader::GPU, "GPU Core");
 }
 
 /**
@@ -28,7 +29,7 @@ double OHMData::getGPUTemperature() const {
  *   CPU temperature in Celsius, -1.0 if not found
  */
 double OHMData::getCPUTemperature() const {
-  return findComponent("Intel", "CPU Package");
+  return findComponent(ConfigLoader::CPU, "CPU Package");
 }
 
 /**
@@ -106,7 +107,7 @@ double OHMData::findMotherboardTemperature() const {
         continue;
 
       std::string deviceName = motherboardNode["Text"].get<std::string>();
-      if (deviceName.find("MSI MPG Z390") != std::string::npos) {
+      if (deviceName.find(ConfigLoader::MOTHERBOARD) != std::string::npos) {
         for (const auto& chipNode : motherboardNode["Children"]) {
           if (chipNode["Text"].get<std::string>().find("Nuvoton") != std::string::npos) {
             return findTemperature(chipNode, "CPU Core");
@@ -137,6 +138,7 @@ double OHMData::findTemperature(const nlohmann::json& device, const std::string&
         if (sensor.contains("Text") && sensor["Text"] == sensorName && sensor.contains("Value")) {
           std::string valueStr = sensor["Value"].get<std::string>();
           valueStr.erase(valueStr.find(" °C"), 3);
+
           return std::stod(valueStr);
         }
       }

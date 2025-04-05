@@ -3,9 +3,9 @@
 
 // Project headers
 #include "api/ohm_api.h"
+#include "api/ohm_data.h"
 #include "config/config.h"
 #include "inputs/ohm_source.h"
-#include "ohm_data.h"
 
 /**
  * @brief Retrieves a temperature measurement for a specific component.

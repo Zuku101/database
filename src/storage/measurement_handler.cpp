@@ -7,9 +7,9 @@
 
 // Project headers
 #include "api/ohm_api.h"
+#include "api/ohm_data.h"
 #include "config/config.h"
 #include "inputs/ohm_source.h"
-#include "ohm_data.h"
 #include "storage/measurement_handler.h"
 
 using namespace std;
@@ -23,6 +23,7 @@ using json = nlohmann::json;
  */
 MeasurementHandler& MeasurementHandler::getInstance() {
   static MeasurementHandler instance;
+
   return instance;
 }
 
@@ -37,6 +38,7 @@ bool MeasurementHandler::kbhit() const {
   fd_set fds;
   FD_ZERO(&fds);
   FD_SET(0, &fds);
+
   return select(1, &fds, NULL, NULL, &tv) > 0;
 }
 
@@ -73,6 +75,7 @@ void MeasurementHandler::handleMonitoring(const std::string& component) {
 
     if (input == "exit" || input == "e") {
       cout << "Returning to Monitor Menu...\n";
+
       return;
     }
 
@@ -152,7 +155,8 @@ void MeasurementHandler::handleMonitoring(const std::string& component) {
         }
       }
 
-      cout << "✅ Monitoring completed.\n";
+      cout << "Monitoring completed.\n";
+
       return;
     }
     catch (const exception& e) {
