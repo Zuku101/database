@@ -57,4 +57,45 @@ private:
    * @brief Clears the standard input buffer.
    */
   void clearInputBuffer();
+
+  /**
+   * @brief Asks the user for the monitoring duration.
+   *
+   * @return int
+   *   Monitoring duration in seconds, or -1 if the user exits.
+   */
+  int askForDuration();
+
+  /**
+   * @brief Asks the user for the measurement interval.
+   *
+   * @return int
+   *   Interval between measurements in seconds.
+   */
+  int askForInterval();
+
+  /**
+   * @brief Executes the monitoring process for a given component.
+   *
+   * @param component
+   *   Name of the component to monitor.
+   * @param duration
+   *   Total monitoring time in seconds.
+   * @param interval
+   *   Time between measurements in seconds.
+   */
+  void performMonitoring(const std::string& component, int duration, int interval);
+
+  /**
+   * @brief Records a single temperature measurement for a component.
+   *
+   * @param component
+   *   Name of the component to measure.
+   */
+  void recordMeasurement(const std::string& component);
+
+  /**
+   * @brief Records temperature measurements for all components (GPU, CPU, Motherboard).
+   */
+  void recordAllMeasurements();
 };

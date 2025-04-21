@@ -194,7 +194,10 @@ void runCLI() {
                             [](const string& comp, int count, bool fromStart) {
                               try {
                                 FileSource source;
-                                auto records = source.getMeasurements(comp, count, fromStart);
+                                std::string fileComponent =
+                                    (comp == "All components") ? "all_measurements" : comp;
+                                auto records =
+                                    source.getMeasurements(fileComponent, count, fromStart);
 
                                 cout << "📋 Showing " << records.size() << " record(s) for " << comp
                                      << ":\n";

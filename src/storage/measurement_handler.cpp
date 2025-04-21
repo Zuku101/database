@@ -64,103 +64,152 @@ MeasurementHandler::MeasurementHandler() {
  *   Component name.
  */
 void MeasurementHandler::handleMonitoring(const std::string& component) {
-  string input;
+  int duration = askForDuration();
+  if (duration == -1)
+    return;
+
+  int interval = askForInterval();
+  if (interval == -1)
+    return;
+
+  performMonitoring(component, duration, interval);
+}
+
+/**
+ * @brief Asks the user for the monitoring duration.
+ *
+ * @return
+ *   Duration in seconds, or -1 if the user exits.
+ */
+int MeasurementHandler::askForDuration() {
+  std::string input;
   while (true) {
-    cout << "\nEnter monitoring duration in seconds (0 for continuous monitoring, 'exit' or 'e' to "
-            "return): ";
-    if (!(cin >> input)) {
+    std::cout << "\nEnter monitoring duration in seconds (0 for continuous monitoring, 'exit' or "
+                 "'e' to return): ";
+    if (!(std::cin >> input)) {
       clearInputBuffer();
       continue;
     }
 
     if (input == "exit" || input == "e") {
-      cout << "Returning to Monitor Menu...\n";
-
-      return;
+      std::cout << "Returning to Monitor Menu...\n";
+      return -1;
     }
 
+    if (input.find_first_not_of("0123456789") != std::string::npos) {
+      std::cout << "Invalid input. Please enter a whole number.\n";
+      continue;
+    }
+
+    return std::stoi(input);
+  }
+}
+
+/**
+ * @brief Asks the user for the measurement interval.
+ *
+ * @return
+ *   Interval in seconds.
+ */
+int MeasurementHandler::askForInterval() {
+  std::string input;
+  while (true) {
+    std::cout << "Enter measurement interval in seconds (1 or more): ";
+    if (!(std::cin >> input)) {
+      clearInputBuffer();
+      continue;
+    }
+
+    if (input.find_first_not_of("0123456789") != std::string::npos) {
+      std::cout << "Invalid interval. Please enter a whole number.\n";
+      continue;
+    }
+
+    int interval = std::stoi(input);
+    if (interval < 1) {
+      std::cout << "Invalid interval. Please enter a number greater than 0.\n";
+      continue;
+    }
+
+    return interval;
+  }
+}
+
+/**
+ * @brief Executes the monitoring process for a given component.
+ *
+ * @param component
+ *   Name of the component to monitor.
+ * @param duration
+ *   Total monitoring time in seconds.
+ * @param interval
+ *   Time between measurements in seconds.
+ */
+void MeasurementHandler::performMonitoring(const std::string& component, int duration,
+                                           int interval) {
+  bool monitoring = true;
+  int elapsedSeconds = 0;
+
+  std::cout << "📊 Starting monitoring for " << component << " every " << interval
+            << " seconds...\n";
+
+  while (monitoring) {
     try {
-      if (input.find_first_not_of("0123456789") != string::npos) {
-        cout << "Invalid input. Please enter a whole number.\n";
-        continue;
+      if (component == "All components") {
+        recordAllMeasurements();
       }
-
-      int duration = stoi(input);
-
-      cout << "Enter measurement interval in seconds (1 or more): ";
-      if (!(cin >> input)) {
-        clearInputBuffer();
-        continue;
+      else {
+        recordMeasurement(component);
       }
-
-      if (input.find_first_not_of("0123456789") != string::npos) {
-        cout << "Invalid interval. Please enter a whole number.\n";
-        continue;
-      }
-
-      int interval = stoi(input);
-      if (interval < 1) {
-        cout << "Invalid interval. Please enter a number greater than 0.\n";
-        continue;
-      }
-
-      bool monitoring = true;
-      int elapsedSeconds = 0;
-
-      cout << "📊 Starting monitoring for " << component << " every " << interval
-           << " seconds...\n";
-
-      while (monitoring) {
-        std::string ohmJsonString = fetchOHMData(OHM_URL);
-        if (!ohmJsonString.empty()) {
-          try {
-            if (component == "All components") {
-              std::vector<std::string> comps = {"GPU", "CPU", "Motherboard"};
-              for (const auto& comp : comps) {
-                try {
-                  Measurement m = source->getMeasurement(comp);
-                  storage.saveRecord(m);
-                  std::cout << "📝 Recorded " << comp << " temperature: " << m.temperature
-                            << "°C\n";
-                }
-                catch (const std::exception& e) {
-                  std::cerr << "⚠️  Skipping " << comp << ": " << e.what() << "\n";
-                }
-              }
-            }
-            else {
-              Measurement m = source->getMeasurement(component);
-              storage.saveRecord(m);
-              std::cout << "📝 Recorded " << component << " temperature: " << m.temperature
-                        << "°C\n";
-            }
-          }
-          catch (...) {
-            std::cerr << "❌ Error fetching or saving data.\n";
-          }
-        }
-        if (duration > 0) {
-          elapsedSeconds += interval;
-          if (elapsedSeconds >= duration) {
-            monitoring = false;
-          }
-        }
-
-        if (monitoring) {
-          std::this_thread::sleep_for(std::chrono::seconds(interval));
-        }
-
-        if (duration == 0 && kbhit()) {
-          monitoring = false;
-        }
-      }
-
-      cout << "Monitoring completed.\n";
-
-      return;
     }
-    catch (const exception& e) {
-      cout << "Invalid input. Please enter a valid number.\n";
+    catch (...) {
+      std::cerr << "❌ Error fetching or saving data.\n";
+    }
+
+    if (duration > 0) {
+      elapsedSeconds += interval;
+      if (elapsedSeconds >= duration) {
+        monitoring = false;
+      }
+    }
+
+    if (monitoring) {
+      std::this_thread::sleep_for(std::chrono::seconds(interval));
+    }
+
+    if (duration == 0 && kbhit()) {
+      monitoring = false;
+    }
+  }
+
+  std::cout << "✅ Monitoring completed.\n";
+}
+
+/**
+ * @brief Records a single temperature measurement for a component.
+ *
+ * @param component
+ *   Name of the component to measure.
+ */
+void MeasurementHandler::recordMeasurement(const std::string& component) {
+  Measurement m = source->getMeasurement(component);
+  storage.saveRecord(m);
+  std::cout << "📝 Recorded " << component << " temperature: " << m.temperature << "°C\n";
+}
+
+/**
+ * @brief Records temperature measurements for all components (GPU, CPU, Motherboard).
+ */
+void MeasurementHandler::recordAllMeasurements() {
+  std::vector<std::string> components = {"GPU", "CPU", "Motherboard"};
+  for (const auto& comp : components) {
+    try {
+      Measurement m = source->getMeasurement(comp);
+      storage.saveRecord(m);
+      std::cout << "📝 Recorded " << comp << " temperature: " << m.temperature << "°C\n";
+    }
+    catch (const std::exception& e) {
+      std::cerr << "⚠️  Skipping " << comp << ": " << e.what() << "\n";
     }
   }
 }
