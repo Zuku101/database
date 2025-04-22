@@ -19,7 +19,8 @@ SRCS = $(SRC_DIR)/cli.cpp \
        $(SRC_DIR)/storage/index_manager.cpp \
        $(SRC_DIR)/storage/measurement_handler.cpp \
        $(SRC_DIR)/storage/storage.cpp \
-       $(SRC_DIR)/utils/utils.cpp
+       $(SRC_DIR)/utils/utils.cpp \
+       $(SRC_DIR)/benchmark.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
