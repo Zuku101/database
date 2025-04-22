@@ -40,6 +40,9 @@ jsonfile:
 $(BIN): $(SRCS)
 	$(CC) $(CFLAGS) -o $(BIN) $(SRCS) $(LDFLAGS)
 
+format:
+	find ../src ../include -type f \( -name '*.cpp' -o -name '*.h' \) -exec clang-format -i {} +
+
 clean:
 	rm -rf $(BUILD_DIR)
 

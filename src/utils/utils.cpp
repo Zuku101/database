@@ -34,9 +34,9 @@ std::string getDataDirectory() {
  */
 void ensureDataDirectoryExists(const std::string& dataPath) {
   if (access(dataPath.c_str(), F_OK) == -1) {
-    std::cout << "📁 Creating directory '" << dataPath << "'...\n";
+    std::cout << "Creating directory '" << dataPath << "'...\n";
     if (mkdir(dataPath.c_str(), 0777) == -1) {
-      std::cerr << "❌ Error: Cannot create directory '" << dataPath << "'.\n";
+      std::cerr << "Error: Cannot create directory '" << dataPath << "'.\n";
     }
   }
 }

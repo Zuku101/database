@@ -150,8 +150,7 @@ void MeasurementHandler::performMonitoring(const std::string& component, int dur
   bool monitoring = true;
   int elapsedSeconds = 0;
 
-  std::cout << "📊 Starting monitoring for " << component << " every " << interval
-            << " seconds...\n";
+  std::cout << "Starting monitoring for " << component << " every " << interval << " seconds...\n";
 
   while (monitoring) {
     try {
@@ -163,7 +162,7 @@ void MeasurementHandler::performMonitoring(const std::string& component, int dur
       }
     }
     catch (...) {
-      std::cerr << "❌ Error fetching or saving data.\n";
+      std::cerr << "Error fetching or saving data.\n";
     }
 
     if (duration > 0) {
@@ -182,7 +181,7 @@ void MeasurementHandler::performMonitoring(const std::string& component, int dur
     }
   }
 
-  std::cout << "✅ Monitoring completed.\n";
+  std::cout << "Monitoring completed.\n";
 }
 
 /**
@@ -194,7 +193,7 @@ void MeasurementHandler::performMonitoring(const std::string& component, int dur
 void MeasurementHandler::recordMeasurement(const std::string& component) {
   Measurement m = source->getMeasurement(component);
   storage.saveRecord(m);
-  std::cout << "📝 Recorded " << component << " temperature: " << m.temperature << "°C\n";
+  std::cout << "Recorded " << component << " temperature: " << m.temperature << "°C\n";
 }
 
 /**
@@ -206,10 +205,10 @@ void MeasurementHandler::recordAllMeasurements() {
     try {
       Measurement m = source->getMeasurement(comp);
       storage.saveRecord(m);
-      std::cout << "📝 Recorded " << comp << " temperature: " << m.temperature << "°C\n";
+      std::cout << "Recorded " << comp << " temperature: " << m.temperature << "°C\n";
     }
     catch (const std::exception& e) {
-      std::cerr << "⚠️  Skipping " << comp << ": " << e.what() << "\n";
+      std::cerr << "Skipping " << comp << ": " << e.what() << "\n";
     }
   }
 }
@@ -227,10 +226,10 @@ void MeasurementHandler::addSingleRecord(const std::string& componentName) {
       try {
         Measurement m = source->getMeasurement(comp);
         storage.saveRecord(m);
-        std::cout << "📝 Recorded " << comp << " temperature: " << m.temperature << "°C\n";
+        std::cout << "Recorded " << comp << " temperature: " << m.temperature << "°C\n";
       }
       catch (const std::exception& e) {
-        std::cerr << "⚠️  Skipping " << comp << ": " << e.what() << "\n";
+        std::cerr << "Skipping " << comp << ": " << e.what() << "\n";
       }
     }
   }
@@ -238,10 +237,10 @@ void MeasurementHandler::addSingleRecord(const std::string& componentName) {
     try {
       Measurement m = source->getMeasurement(componentName);
       storage.saveRecord(m);
-      std::cout << "📝 Recorded " << componentName << " temperature: " << m.temperature << "°C\n";
+      std::cout << "Recorded " << componentName << " temperature: " << m.temperature << "°C\n";
     }
     catch (const std::exception& e) {
-      std::cerr << "❌ Error: " << e.what() << "\n";
+      std::cerr << "Error: " << e.what() << "\n";
     }
   }
 }

@@ -199,7 +199,7 @@ void runCLI() {
                                 auto records =
                                     source.getMeasurements(fileComponent, count, fromStart);
 
-                                cout << "📋 Showing " << records.size() << " record(s) for " << comp
+                                cout << "Showing " << records.size() << " record(s) for " << comp
                                      << ":\n";
                                 for (const auto& r : records) {
                                   cout << " - Temp: " << r.temperature << "°C"
@@ -207,7 +207,7 @@ void runCLI() {
                                 }
                               }
                               catch (const std::exception& e) {
-                                cerr << "❌ Error: " << e.what() << endl;
+                                cerr << "Error: " << e.what() << endl;
                               }
                             });
         }}},
@@ -222,7 +222,7 @@ void runCLI() {
                                 source.exportToCSV(comp, count, fromStart);
                               }
                               catch (const std::exception& e) {
-                                cerr << "❌ Error: " << e.what() << endl;
+                                cerr << "Error: " << e.what() << endl;
                               }
                             });
         }}},
@@ -235,19 +235,17 @@ void runCLI() {
 
                                    if (comp == "All components") {
                                      source.deleteMeasurements("All components", count, fromStart);
-                                     cout << "🗑️ Deleted "
-                                          << (count == 0 ? "all" : to_string(count))
+                                     cout << "Deleted " << (count == 0 ? "all" : to_string(count))
                                           << " record(s) from all_measurements.json.\n";
                                    }
                                    else {
                                      source.deleteMeasurements(comp, count, fromStart);
-                                     cout << "🗑️ Deleted "
-                                          << (count == 0 ? "all" : to_string(count))
+                                     cout << "Deleted " << (count == 0 ? "all" : to_string(count))
                                           << " record(s) for " << comp << ".\n";
                                    }
                                  }
                                  catch (const std::exception& e) {
-                                   cerr << "❌ Error: " << e.what() << endl;
+                                   cerr << "Error: " << e.what() << endl;
                                  }
                                });
            }}}};
