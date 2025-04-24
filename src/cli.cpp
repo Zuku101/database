@@ -15,7 +15,7 @@
 // Project headers
 #include "api/ohm_api.h"
 #include "api/ohm_data.h"
-#include "benchmark.h"
+#include "benchmark/benchmark.h"
 #include "cli.h"
 #include "config/config.h"
 #include "inputs/file_source.h"

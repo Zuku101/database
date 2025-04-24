@@ -1,6 +1,7 @@
 CC = g++
 CFLAGS = -Wall -I../include
 LDFLAGS = -lcurl
+LDLIBS  = -lsqlite3
 
 SRC_DIR = ../src
 BUILD_DIR = ../build
@@ -20,7 +21,8 @@ SRCS = $(SRC_DIR)/cli.cpp \
        $(SRC_DIR)/storage/measurement_handler.cpp \
        $(SRC_DIR)/storage/storage.cpp \
        $(SRC_DIR)/utils/utils.cpp \
-       $(SRC_DIR)/benchmark.cpp
+       $(SRC_DIR)/benchmark/benchmark.cpp \
+       $(SRC_DIR)/benchmark/sqlite_storage.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
@@ -39,7 +41,7 @@ jsonfile:
 	@if [ ! -f $(JSON_FILE) ]; then echo "[]" > $(JSON_FILE); fi
 
 $(BIN): $(SRCS)
-	$(CC) $(CFLAGS) -o $(BIN) $(SRCS) $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(BIN) $(SRCS) $(LDFLAGS) $(LDLIBS)
 
 format:
 	find ../src ../include -type f \( -name '*.cpp' -o -name '*.h' \) -exec clang-format -i {} +
