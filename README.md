@@ -4,3 +4,4 @@ sudo apt install nlohmann-json3-dev
 sudo apt install libbson-dev
 
 netsh advfirewall firewall add rule name="OHM WSL Allow" dir=in action=allow protocol=TCP localport=8080
+sudo apt install -y libsqlite3-dev

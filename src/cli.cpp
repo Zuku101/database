@@ -15,6 +15,7 @@
 // Project headers
 #include "api/ohm_api.h"
 #include "api/ohm_data.h"
+#include "benchmark/benchmark.h"
 #include "cli.h"
 #include "config/config.h"
 #include "inputs/file_source.h"
@@ -227,28 +228,31 @@ void runCLI() {
                             });
         }}},
 
-      {5, {"Delete", []() {
-             showOperationMenu(OperationType::DELETE, "Delete Component",
-                               [](const string& comp, int count, bool fromStart) {
-                                 try {
-                                   FileSource source;
+      {5,
+       {"Delete",
+        []() {
+          showOperationMenu(OperationType::DELETE, "Delete Component",
+                            [](const string& comp, int count, bool fromStart) {
+                              try {
+                                FileSource source;
 
-                                   if (comp == "All components") {
-                                     source.deleteMeasurements("All components", count, fromStart);
-                                     cout << "Deleted " << (count == 0 ? "all" : to_string(count))
-                                          << " record(s) from all_measurements.json.\n";
-                                   }
-                                   else {
-                                     source.deleteMeasurements(comp, count, fromStart);
-                                     cout << "Deleted " << (count == 0 ? "all" : to_string(count))
-                                          << " record(s) for " << comp << ".\n";
-                                   }
-                                 }
-                                 catch (const std::exception& e) {
-                                   cerr << "Error: " << e.what() << endl;
-                                 }
-                               });
-           }}}};
+                                if (comp == "All components") {
+                                  source.deleteMeasurements("All components", count, fromStart);
+                                  cout << "Deleted " << (count == 0 ? "all" : to_string(count))
+                                       << " record(s) from all_measurements.json.\n";
+                                }
+                                else {
+                                  source.deleteMeasurements(comp, count, fromStart);
+                                  cout << "Deleted " << (count == 0 ? "all" : to_string(count))
+                                       << " record(s) for " << comp << ".\n";
+                                }
+                              }
+                              catch (const std::exception& e) {
+                                cerr << "Error: " << e.what() << endl;
+                              }
+                            });
+        }}},
+      {6, {"Benchmark", []() { runBenchmark(); }}}};
 
   string input;
   while (true) {
@@ -256,7 +260,7 @@ void runCLI() {
     for (const auto& [key, item] : mainMenu) {
       cout << key << ". " << item.label << "\n";
     }
-    cout << "6. Exit\n";
+    cout << "7. Exit\n";
     cout << "Select an option: ";
 
     if (!(cin >> input)) {
@@ -267,7 +271,7 @@ void runCLI() {
 
     try {
       int choice = stoi(input);
-      if (choice == 6) {
+      if (choice == 7) {
         cout << "Exiting program...\n";
 
         return;
