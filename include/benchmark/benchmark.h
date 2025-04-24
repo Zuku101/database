@@ -20,8 +20,7 @@
  * @return long long
  *   Total time spent saving in microseconds
  */
-long long benchmarkSaveJson(const std::vector<std::string>& components,
-                            int numRecords,
+long long benchmarkSaveJson(const std::vector<std::string>& components, int numRecords,
                             int interval);
 
 /**
@@ -37,8 +36,7 @@ long long benchmarkSaveJson(const std::vector<std::string>& components,
  * @return long long
  *   Total time spent reading in nanoseconds
  */
-long long benchmarkReadJson(const std::vector<std::string>& components,
-                            int numRecords,
+long long benchmarkReadJson(const std::vector<std::string>& components, int numRecords,
                             int interval);
 
 /**
@@ -54,8 +52,7 @@ long long benchmarkReadJson(const std::vector<std::string>& components,
  * @return long long
  *   Total time spent saving in microseconds
  */
-long long benchmarkSaveSqlite(const std::vector<std::string>& components,
-                              int numRecords,
+long long benchmarkSaveSqlite(const std::vector<std::string>& components, int numRecords,
                               int interval);
 
 /**
@@ -71,8 +68,7 @@ long long benchmarkSaveSqlite(const std::vector<std::string>& components,
  * @return long long
  *   Total time spent reading in nanoseconds
  */
-long long benchmarkReadSqlite(const std::vector<std::string>& components,
-                              int numRecords,
+long long benchmarkReadSqlite(const std::vector<std::string>& components, int numRecords,
                               int interval);
 
 /**

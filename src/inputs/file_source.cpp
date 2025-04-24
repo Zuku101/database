@@ -298,6 +298,19 @@ void FileSource::updateAllMeasurementsFile(const std::vector<long long>& timesta
   }
 }
 
+/**
+ * @brief Exports measurement data to a CSV file.
+ *
+ * @param component std::string
+ *   Name of the component or "All components"
+ * @param count int
+ *   Number of records to export (0 = all)
+ * @param fromStart bool
+ *   True = from beginning, False = from end
+ *
+ * @return void
+ *   Throws on file I/O or JSON errors
+ */
 void FileSource::exportToCSV(const std::string& component, int count, bool fromStart) {
   std::vector<Measurement> measurements;
 

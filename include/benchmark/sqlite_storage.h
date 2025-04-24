@@ -19,7 +19,8 @@ public:
    * @brief Constructs the manager and opens (or creates) the SQLite database.
    *
    * @param dbPath
-   *   Path to the SQLite database file; if empty, defaults to getDataDirectory() + "/measurements.db".
+   *   Path to the SQLite database file; if empty, defaults to getDataDirectory() +
+   * "/measurements.db".
    *
    * @throws std::runtime_error
    *   If the database cannot be opened.
@@ -60,7 +61,7 @@ public:
 
 private:
   sqlite3* db;
-  
+
   /**
    * @brief Executes a raw SQL statement.
    *
