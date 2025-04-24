@@ -1,6 +1,6 @@
 # To properly configure the environment and components from which we will read temperatures:
 #
-# 1. Open Open Hardware Monitor
+# 1. Open "Open Hardware Monitor"
 # 2. Find:
 #    - For CPU: processor name (e.g., "Intel")
 #    - For GPU: graphics card name (e.g., "NVIDIA")
